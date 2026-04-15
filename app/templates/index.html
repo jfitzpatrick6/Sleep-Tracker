@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="mb-4">Sleep Dashboard</h1>
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="card text-center mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Current Sleep Debt</h5>
+                <h2 class="{% if current_debt > 0 %}debt-positive{% else %}debt-negative{% endif %}">
+                    {{ current_debt }} hours
+                </h2>
+                <small class="text-muted">Target: {{ target }} h/night</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-8">
+        <canvas id="sleepChart" height="120"></canvas>
+    </div>
+</div>
+
+<h4>Recent Entries</h4>
+<table class="table table-hover">
+    <thead><tr><th>Date</th><th>Hours</th><th>Notes</th><th></th></tr></thead>
+    <tbody>
+    {% for entry in recent %}
+        <tr>
+            <td>{{ entry.sleep_date }}</td>
+            <td>{{ entry.hours_slept }}</td>
+            <td>{{ entry.notes or '-' }}</td>
+            <td><a href="{{ url_for('main.delete_entry', entry_id=entry.id) }}" class="text-danger">🗑</a></td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+<script>
+const data = JSON.parse('{{ history | safe }}');
+new Chart(document.getElementById('sleepChart'), {
+    type: 'line',
+    data: {
+        labels: data.map(d => d.date),
+        datasets: [
+            { label: 'Hours Slept', data: data.map(d => d.hours), borderColor: '#0d6efd', tension: 0.3 },
+            { label: 'Sleep Debt', data: data.map(d => d.debt), borderColor: '#dc3545', tension: 0.3 }
+        ]
+    },
+    options: { scales: { y: { beginAtZero: true } } }
+});
+</script>
+{% endblock %}
