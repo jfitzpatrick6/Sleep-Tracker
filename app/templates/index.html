@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="mb-4">Sleep Dashboard • {{ username }}</h1>
+
+<div class="row mb-4">
+    <!-- Lifetime Debt -->
+    <div class="col-md-6 col-lg-4">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <h5 class="card-title text-muted">Total Sleep Debt (All Time)</h5>
+                <h2 class="{% if lifetime_debt > 0 %}debt-positive{% else %}debt-negative{% endif %}">
+                    {{ lifetime_debt }} hours
+                </h2>
+            </div>
+        </div>
+    </div>
+
+    <!-- Period Debt -->
+    <div class="col-md-6 col-lg-4">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <h5 class="card-title text-muted">Debt — {{ period_label }}</h5>
+                <h2 class="{% if period_debt > 0 %}debt-positive{% else %}debt-negative{% endif %}">
+                    {{ period_debt }} hours
+                </h2>
+            </div>
+        </div>
+    </div>
+
+    <!-- Period Selector -->
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <label class="form-label">Graph Period</label>
+                <div class="btn-group w-100 flex-wrap" role="group">
+                    <a href="?period=7"  class="btn btn-outline-primary {% if period == '7' %}active{% endif %}">7 days</a>
+                    <a href="?period=14" class="btn btn-outline-primary {% if period == '14' %}active{% endif %}">14 days</a>
+                    <a href="?period=30" class="btn btn-outline-primary {% if period == '30' %}active{% endif %}">30 days</a>
+                    <a href="?period=90" class="btn btn-outline-primary {% if period == '90' %}active{% endif %}">90 days</a>
+                    <a href="?period=ytd" class="btn btn-outline-primary {% if period == 'ytd' %}active{% endif %}">YTD</a>
+                    <a href="?period=all" class="btn btn-outline-primary {% if period == 'all' %}active{% endif %}">All Time</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart -->
+<div class="card mb-4">
+    <div class="card-header">
+        <strong>Sleep Hours vs Running Debt — {{ period_label }}</strong>
+    </div>
+    <div class="card-body">
+        <canvas id="sleepChart" height="140"></canvas>
+    </div>
+</div>
+
+<!-- Recent Entries -->
+<h4 class="mt-4">Recent Entries</h4>
+<table class="table table-hover">
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Hours Slept</th>
+            <th>Notes</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for entry in recent %}
+        <tr>
+            <td>{{ entry.sleep_date }}</td>
+            <td>{{ entry.hours_slept|round(1) }} h</td>
+            <td>{{ entry.notes or '—' }}</td>
+            <td><a href="{{ url_for('main.delete_entry', entry_id=entry.id) }}" class="text-danger small">Delete</a></td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+<script>
+const rawData = {{ history | safe }};
+
+new Chart(document.getElementById('sleepChart'), {
+    type: 'line',
+    data: {
+        labels: rawData.map(d => d.date),
+        datasets: [
+            {
+                label: 'Hours Slept',
+                data: rawData.map(d => d.hours),
+                borderColor: '#0d6efd',
+                tension: 0.3,
+                yAxisID: 'y'
+            },
+            {
+                label: 'Running Sleep Debt',
+                data: rawData.map(d => d.debt),
+                borderColor: '#dc3545',
+                tension: 0.3,
+                yAxisID: 'y1'
+            }
+        ]
+    },
+    options: {
+        scales: {
+            y: {
+                type: 'linear',
+                position: 'left',
+                title: { display: true, text: 'Hours Slept' },
+                beginAtZero: true
+            },
+            y1: {
+                type: 'linear',
+                position: 'right',
+                title: { display: true, text: 'Cumulative Debt (hours)' },
+                grid: { drawOnChartArea: false }
+            }
+        },
+        plugins: {
+            legend: { position: 'top' }
+        }
+    }
+});
+</script>
+{% endblock %}

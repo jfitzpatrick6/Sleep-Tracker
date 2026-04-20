@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-4">
+        <div class="card shadow">
+            <div class="card-header bg-success text-white text-center">
+                <h4 class="mb-0">Create Account</h4>
+            </div>
+            <div class="card-body">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ 'danger' if category == 'danger' else 'success' }} alert-dismissible fade show">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <form method="POST">
+                    <div class="mb-3">
+                        <label class="form-label">Username</label>
+                        <input type="text" 
+                               name="username" 
+                               class="form-control" 
+                               required 
+                               autocomplete="username">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Password</label>
+                        <input type="password" 
+                               name="password" 
+                               class="form-control" 
+                               required 
+                               autocomplete="new-password">
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-success btn-lg">Register</button>
+                    </div>
+                </form>
+            </div>
+            <div class="card-footer text-center">
+                <a href="{{ url_for('auth.login') }}">Already have an account? Login</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

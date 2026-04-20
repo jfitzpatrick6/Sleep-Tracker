@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">Log Sleep Entry</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="sleep_date" class="form-label">Sleep Date</label>
+                        <input type="date" 
+                               class="form-control" 
+                               id="sleep_date" 
+                               name="sleep_date" 
+                               value="{{ today }}" 
+                               required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Hours Slept</label>
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <div class="input-group">
+                                    <input type="number" 
+                                           class="form-control" 
+                                           id="hours" 
+                                           name="hours" 
+                                           min="0" 
+                                           max="24" 
+                                           value="7"
+                                           required>
+                                    <span class="input-group-text">hours</span>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="input-group">
+                                    <input type="number" 
+                                           class="form-control" 
+                                           id="minutes" 
+                                           name="minutes" 
+                                           min="0" 
+                                           max="59" 
+                                           value="30"
+                                           required>
+                                    <span class="input-group-text">minutes</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-text mt-2">
+                            Example: 7 hours and 45 minutes
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Notes (optional)</label>
+                        <textarea class="form-control" 
+                                  id="notes" 
+                                  name="notes" 
+                                  rows="3" 
+                                  placeholder="Fell asleep at 11pm, woke up feeling rested..."></textarea>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">Save Sleep Entry</button>
+                    </div>
+                </form>
+            </div>
+            <div class="card-footer text-muted text-center">
+                <small>Tip: Logging the same date again will update the existing entry.</small>
+            </div>
+        </div>
+
+        <div class="text-center mt-4">
+            <a href="{{ url_for('main.index') }}" class="btn btn-outline-secondary">← Back to Dashboard</a>
+        </div>
+    </div>
+</div>
+
+<script>
+// Set today's date by default
+document.addEventListener('DOMContentLoaded', function() {
+    const dateInput = document.getElementById('sleep_date');
+    if (!dateInput.value) {
+        const today = new Date().toISOString().split('T')[0];
+        dateInput.value = today;
+    }
+});
+</script>
+{% endblock %}
