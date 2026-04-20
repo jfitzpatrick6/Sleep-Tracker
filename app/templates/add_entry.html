@@ -19,16 +19,38 @@
                     </div>
 
                     <div class="mb-3">
-                        <label for="hours_slept" class="form-label">Hours Slept</label>
-                        <input type="number" 
-                               class="form-control" 
-                               id="hours_slept" 
-                               name="hours_slept" 
-                               step="0.1" 
-                               min="0" 
-                               max="24" 
-                               placeholder="7.5" 
-                               required>
+                        <label class="form-label">Hours Slept</label>
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <div class="input-group">
+                                    <input type="number" 
+                                           class="form-control" 
+                                           id="hours" 
+                                           name="hours" 
+                                           min="0" 
+                                           max="24" 
+                                           value="7"
+                                           required>
+                                    <span class="input-group-text">hours</span>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="input-group">
+                                    <input type="number" 
+                                           class="form-control" 
+                                           id="minutes" 
+                                           name="minutes" 
+                                           min="0" 
+                                           max="59" 
+                                           value="30"
+                                           required>
+                                    <span class="input-group-text">minutes</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-text mt-2">
+                            Example: 7 hours and 45 minutes
+                        </div>
                     </div>
 
                     <div class="mb-3">
@@ -37,7 +59,7 @@
                                   id="notes" 
                                   name="notes" 
                                   rows="3" 
-                                  placeholder="Fell asleep at 11pm, woke up at 7am..."></textarea>
+                                  placeholder="Fell asleep at 11pm, woke up feeling rested..."></textarea>
                     </div>
 
                     <div class="d-grid gap-2">
@@ -46,7 +68,7 @@
                 </form>
             </div>
             <div class="card-footer text-muted text-center">
-                <small>Tip: You can edit an existing entry by logging the same date again.</small>
+                <small>Tip: Logging the same date again will update the existing entry.</small>
             </div>
         </div>
 

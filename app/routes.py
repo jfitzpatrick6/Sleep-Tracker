@@ -33,21 +33,36 @@ def index():
 
 @bp.route('/add', methods=['GET', 'POST'])
 def add_entry():
+    from datetime import date
+    today = date.today().isoformat()
+    
     if request.method == 'POST':
-        sleep_date = date.fromisoformat(request.form['sleep_date'])
-        hours = float(request.form['hours_slept'])
-        notes = request.form.get('notes', '')
-        # prevent duplicate dates
-        existing = SleepEntry.query.filter_by(sleep_date=sleep_date).first()
-        if existing:
-            existing.hours_slept = hours
-            existing.notes = notes
-        else:
-            entry = SleepEntry(sleep_date=sleep_date, hours_slept=hours, notes=notes)
-            db.session.add(entry)
-        db.session.commit()
-        return redirect(url_for('main.index'))
-    return render_template('add_entry.html')
+        try:
+            sleep_date = date.fromisoformat(request.form['sleep_date'])
+            hours = int(request.form.get('hours', 0))
+            minutes = int(request.form.get('minutes', 0))
+            
+            # Convert hours + minutes to decimal hours
+            total_hours = hours + (minutes / 60.0)
+            
+            notes = request.form.get('notes', '').strip()
+            
+            # Update if exists, otherwise create new
+            existing = SleepEntry.query.filter_by(sleep_date=sleep_date).first()
+            if existing:
+                existing.hours_slept = total_hours
+                existing.notes = notes
+            else:
+                entry = SleepEntry(sleep_date=sleep_date, hours_slept=total_hours, notes=notes)
+                db.session.add(entry)
+                
+            db.session.commit()
+            return redirect(url_for('main.index'))
+        except (ValueError, TypeError):
+            # You can add flash messages later for better error feedback
+            pass
+    
+    return render_template('add_entry.html', today=today)
 
 @bp.route('/settings', methods=['GET', 'POST'])
 def settings():
