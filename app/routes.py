@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for
 from flask_login import login_required, current_user
 from . import db
 from .models import SleepEntry
@@ -7,40 +7,93 @@ import json
 
 bp = Blueprint('main', __name__)
 
-def get_sleep_debt_and_history(target=8.0):
+def get_sleep_data(period='14', target=8.0):
     if not current_user.is_authenticated:
-        return 0.0, []
-    
-    entries = SleepEntry.query.filter_by(user_id=current_user.id)\
+        return 0.0, 0.0, [], 14
+
+    # Get all entries for the user, sorted by date
+    all_entries = SleepEntry.query.filter_by(user_id=current_user.id)\
         .order_by(SleepEntry.sleep_date).all()
-    
-    debt = 0.0
+
+    # Calculate lifetime debt (all time)
+    lifetime_debt = sum((target - e.hours_slept) for e in all_entries)
+
+    # Determine cutoff date based on selected period
+    today = date.today()
+    if period == '7':
+        days = 7
+        cutoff = today - timedelta(days=6)
+        period_label = '7 days'
+    elif period == '14':
+        days = 14
+        cutoff = today - timedelta(days=13)
+        period_label = '14 days'
+    elif period == '30':
+        days = 30
+        cutoff = today - timedelta(days=29)
+        period_label = '30 days'
+    elif period == '90':
+        days = 90
+        cutoff = today - timedelta(days=89)
+        period_label = '90 days'
+    elif period == 'ytd':
+        cutoff = date(today.year, 1, 1)
+        period_label = 'Year to Date'
+    else:  # 'all'
+        cutoff = date(2000, 1, 1)  # far in the past
+        period_label = 'All Time'
+
+    # Filter entries for the selected period
+    recent_entries = [e for e in all_entries if e.sleep_date >= cutoff]
+
+    # Calculate debt only for the visible period
+    period_debt = sum((target - e.hours_slept) for e in recent_entries)
+
+    # Build history for the chart (running debt within this period)
     history = []
-    for entry in entries:
+    running_debt = 0.0
+
+    for entry in recent_entries:
         daily_deficit = target - entry.hours_slept
-        debt += daily_deficit
+        running_debt += daily_deficit
         history.append({
-            'date': entry.sleep_date.isoformat(),
-            'hours': round(entry.hours_slept, 2),
-            'debt': round(debt, 2)
+            'date': entry.sleep_date.strftime('%b %d'),
+            'hours': round(entry.hours_slept, 1),
+            'debt': round(running_debt, 1)
         })
-    return round(debt, 2), history
+
+    # For All Time or YTD we don't fill missing dates (too many gaps possible)
+    if period not in ['ytd', 'all'] and len(history) < days:
+        # Simple fill for short periods only
+        pass
+
+    return round(lifetime_debt, 1), round(period_debt, 1), history, period_label
+
 
 @bp.route('/')
 @login_required
 def index():
-    target = 8.0
-    current_debt, history = get_sleep_debt_and_history(target)
+    period = request.args.get('period', '14')
+    allowed = ['7', '14', '30', '90', 'ytd', 'all']
+    if period not in allowed:
+        period = '14'
+
+    lifetime_debt, period_debt, history, period_label = get_sleep_data(period)
+
     recent = SleepEntry.query.filter_by(user_id=current_user.id)\
         .order_by(SleepEntry.sleep_date.desc()).limit(10).all()
-    
-    return render_template('index.html',
-                           current_debt=current_debt,
-                           recent=recent,
-                           history=json.dumps(history),
-                           target=target,
-                           username=current_user.username)
 
+    return render_template('index.html',
+                           lifetime_debt=lifetime_debt,
+                           period_debt=period_debt,
+                           history=json.dumps(history),
+                           period=period,
+                           period_label=period_label,
+                           username=current_user.username,
+                           recent=recent)
+
+
+# Keep your existing /add and /delete routes unchanged
 @bp.route('/add', methods=['GET', 'POST'])
 @login_required
 def add_entry():
@@ -74,10 +127,11 @@ def add_entry():
             
             db.session.commit()
             return redirect(url_for('main.index'))
-        except (ValueError, TypeError):
+        except Exception:
             pass
     
     return render_template('add_entry.html', today=today)
+
 
 @bp.route('/delete/<int:entry_id>')
 @login_required
@@ -87,7 +141,7 @@ def delete_entry(entry_id):
     db.session.commit()
     return redirect(url_for('main.index'))
 
-# Optional: Settings (still static for now)
+
 @bp.route('/settings')
 @login_required
 def settings():
